@@ -1,0 +1,389 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum TransactionStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  EXPIRED
+}
+
+enum CourseStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum QuizQuestionType {
+  MULTIPLE_CHOICE
+  ESSAY
+}
+
+// ─── Core Auth & User ────────────────────────────────────────────────────────
+
+model User {
+  id               String    @id @default(cuid())
+  name             String
+  email            String    @unique
+  password         String?
+  googleId         String?   @unique
+  role             Role      @default(USER)
+  avatar           String?
+  phone            String?
+  bio              String?
+  hasAccess        Boolean   @default(false)
+  resetToken       String?
+  resetTokenExpiry DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  transactions     Transaction[]
+  progress         Progress[]
+  quizAttempts     QuizAttempt[]
+  certificates     Certificate[]
+  notifications    Notification[]
+  groups           Group[]         @relation("GroupStudents")
+  tutoredGroups    Group[]         @relation("GroupTutor")
+  privateSchedules ClassSchedule[] @relation("PrivateStudentSchedules")
+  tutorSchedules   ClassSchedule[] @relation("TutorSchedules")
+
+  @@map("users")
+}
+
+// ─── Learning Structure ───────────────────────────────────────────────────────
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  courses Course[]
+
+  @@map("categories")
+}
+
+model Course {
+  id          String       @id @default(cuid())
+  title       String
+  slug        String       @unique
+  description String?
+  thumbnail   String?
+  price       Int          @default(0)
+  status      CourseStatus @default(DRAFT)
+  order       Int          @default(0)
+  categoryId  String
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  category     Category      @relation(fields: [categoryId], references: [id])
+  modules      Module[]
+  quiz         Quiz?
+  certificates Certificate[]
+  transactions Transaction[]
+
+  @@map("courses")
+}
+
+model Module {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique
+  description String?
+  youtubeId   String
+  duration    Int      @default(0)
+  order       Int      @default(0)
+  isFree      Boolean  @default(false)
+  isPublished Boolean  @default(false)
+  courseId    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  course   Course     @relation(fields: [courseId], references: [id])
+  progress Progress[]
+
+  @@map("modules")
+}
+
+// ─── Progress ─────────────────────────────────────────────────────────────────
+
+model Progress {
+  id          String    @id @default(cuid())
+  userId      String
+  moduleId    String
+  completed   Boolean   @default(false)
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  user   User   @relation(fields: [userId], references: [id])
+  module Module @relation(fields: [moduleId], references: [id])
+
+  @@unique([userId, moduleId])
+  @@map("progress")
+}
+
+// ─── Quiz ─────────────────────────────────────────────────────────────────────
+
+model Quiz {
+  id           String   @id @default(cuid())
+  courseId     String   @unique
+  title        String
+  description  String?
+  passingScore Int      @default(70)
+  timeLimit    Int?
+  isPublished  Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  course    Course         @relation(fields: [courseId], references: [id])
+  questions QuizQuestion[]
+  attempts  QuizAttempt[]
+
+  @@map("quizzes")
+}
+
+model QuizQuestion {
+  id             String           @id @default(cuid())
+  quizId         String
+  question       String
+  type           QuizQuestionType @default(MULTIPLE_CHOICE)
+  expectedAnswer String?
+  order          Int              @default(0)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  quiz    Quiz         @relation(fields: [quizId], references: [id])
+  options QuizOption[]
+
+  @@map("quiz_questions")
+}
+
+model QuizOption {
+  id         String   @id @default(cuid())
+  questionId String
+  text       String
+  isCorrect  Boolean  @default(false)
+  order      Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  question QuizQuestion @relation(fields: [questionId], references: [id])
+
+  @@map("quiz_options")
+}
+
+model QuizAttempt {
+  id          String   @id @default(cuid())
+  userId      String
+  quizId      String
+  score       Int      @default(0)
+  passed      Boolean  @default(false)
+  answers     Json
+  completedAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+  quiz Quiz @relation(fields: [quizId], references: [id])
+
+  @@map("quiz_attempts")
+}
+
+// ─── Certificate ──────────────────────────────────────────────────────────────
+
+model Certificate {
+  id                String   @id @default(cuid())
+  userId            String
+  courseId          String
+  certificateNumber String   @unique @default(cuid())
+  issuedAt          DateTime @default(now())
+  createdAt         DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id])
+  course Course @relation(fields: [courseId], references: [id])
+
+  @@unique([userId, courseId])
+  @@map("certificates")
+}
+
+// ─── Payment ──────────────────────────────────────────────────────────────────
+
+model Transaction {
+  id              String            @id @default(cuid())
+  orderId         String            @unique
+  userId          String
+  courseId        String?
+  amount          Int
+  promoCode       String?
+  status          TransactionStatus @default(PENDING)
+  paymentMethod   String?
+  tripayReference String?
+  paidAt          DateTime?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  programId       String?
+
+  user   User    @relation(fields: [userId], references: [id])
+  course Course? @relation(fields: [courseId], references: [id])
+
+  @@map("transactions")
+}
+
+// ─── Promo ────────────────────────────────────────────────────────────────────
+
+model PromoCode {
+  id        String    @id @default(cuid())
+  code      String    @unique
+  discount  Int
+  maxUses   Int?
+  usedCount Int       @default(0)
+  isActive  Boolean   @default(true)
+  expiresAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@map("promo_codes")
+}
+
+// ─── Certificate Template ─────────────────────────────────────────────────────
+
+model CertificateTemplate {
+  id            String   @id @default(cuid())
+  title         String   @default("Certificate of Completion")
+  text          String   @default("Sertifikat ini diberikan kepada {{student_name}} atas keberhasilannya menyelesaikan materi {{course_name}} di Nalar Etam.")
+  logoUrl       String?
+  backgroundUrl String?
+  signatureUrl  String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("certificate_templates")
+}
+
+// ─── Setting ──────────────────────────────────────────────────────────────────
+
+model Setting {
+  id String @id @default("singleton")
+
+  // Academy Profile
+  academyName String  @default("Nalar Etam")
+  tagline     String  @default("Beralih dari Hafalan ke Penalaran Matematika")
+  about       String?
+  email       String  @default("admin@nalaretam.com")
+  phone       String?
+  website     String?
+  instagram   String?
+  tiktok      String?
+  youtube     String?
+  logo        String?
+  cover       String?
+
+  // Pricing
+  coursePrice   Int     @default(399000)
+  originalPrice Int     @default(799000)
+
+  // Certificate Rules
+  autoGenerateCert     Boolean @default(true)
+  minCourseCompletion  Int     @default(100)
+  minQuizScore         Int     @default(70)
+  certPrefix           String  @default("CERT")
+  certFormat           String  @default("CERT-YYYY-0001")
+  verificationUrl      String  @default("https://nalaretam.com/verify")
+  publicVerification   Boolean @default(true)
+  certDateFormat       String  @default("DD MMMM YYYY")
+
+  // Notification Toggles
+  notifEnrollment      Boolean @default(true)
+  notifCompletion      Boolean @default(true)
+  notifQuizResult      Boolean @default(true)
+  notifCertIssued      Boolean @default(true)
+  notifCertDownload    Boolean @default(true)
+  notifPaymentSuccess  Boolean @default(true)
+  notifPaymentFailed   Boolean @default(true)
+  notifPaymentReminder Boolean @default(true)
+  notifAdminNewStudent Boolean @default(true)
+  notifAdminNewPayment Boolean @default(true)
+  notifAdminCertGen    Boolean @default(false)
+  notifChannel         String  @default("Email + In-App")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("settings")
+}
+
+// ─── Class Schedule ───────────────────────────────────────────────────────────
+
+model ClassSchedule {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  scheduledAt DateTime
+  durationMin Int      @default(60)
+  meetingUrl  String?
+  classType   String   @default("ONLINE")
+  location    String?
+  isPublished Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  groupId     String?
+  group       Group?   @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  studentId   String?
+  student     User?    @relation("PrivateStudentSchedules", fields: [studentId], references: [id], onDelete: Cascade)
+  tutorId     String?
+  tutor       User?    @relation("TutorSchedules", fields: [tutorId], references: [id], onDelete: SetNull)
+
+  @@map("class_schedules")
+}
+
+// ─── Notification ─────────────────────────────────────────────────────────────
+
+model Notification {
+  id        String   @id @default(cuid())
+  title     String
+  body      String
+  type      String   @default("announcement")
+  userId    String?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@map("notifications")
+}
+
+enum GroupType {
+  GROUP
+  SEMIPRIVAT
+}
+
+model Group {
+  id          String          @id @default(cuid())
+  name        String
+  type        GroupType
+  maxStudents Int             @default(5)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  students    User[]          @relation("GroupStudents")
+  tutorId     String?
+  tutor       User?           @relation("GroupTutor", fields: [tutorId], references: [id], onDelete: SetNull)
+  schedules   ClassSchedule[]
+
+  @@map("groups")
+}
