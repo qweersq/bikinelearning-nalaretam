@@ -111,9 +111,8 @@ export default function TambahQuizPage({ params }: { params: Promise<{ id: strin
               <button
                 key={String(opt.value)} type="button"
                 onClick={() => set("isPublished", opt.value)}
-                className={`flex-1 rounded-[12px] py-3 text-sm font-bold transition-colors ${
-                  form.isPublished === opt.value ? "bg-[#2563eb] text-white" : "bg-[#f8fafc] text-stone-500"
-                }`}
+                className={`flex-1 rounded-[12px] py-3 text-sm font-bold transition-colors ${form.isPublished === opt.value ? "bg-[#2563eb] text-white" : "bg-[#f8fafc] text-stone-500"
+                  }`}
               >
                 {opt.label}
               </button>
