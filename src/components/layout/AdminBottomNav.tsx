@@ -7,7 +7,7 @@ import { LayoutDashboard, BookOpen, Users, CalendarDays, GraduationCap } from "l
 
 const navItems = [
   { href: "/admin",           label: "Dashboard",  icon: LayoutDashboard },
-  { href: "/admin/kursus",    label: "Mapel",     icon: BookOpen },
+  { href: "/admin/kursus",    label: "Materi",     icon: BookOpen },
   { href: "/admin/grup",      label: "Grup",       icon: Users },
   { href: "/admin/jadwal",    label: "Jadwal",     icon: CalendarDays },
   { href: "/admin/member",    label: "Siswa",      icon: GraduationCap },

@@ -73,14 +73,14 @@ export default function CreateCoursePage() {
             <ArrowLeft size={18} className="text-stone-600" />
           </div>
         </Link>
-        <h1 className="text-[28px] font-extrabold text-stone-900">Tambah Mata Pelajaran</h1>
+        <h1 className="text-[28px] font-extrabold text-stone-900">Tambah Materi</h1>
       </div>
 
       <div className="rounded-[28px] bg-white p-6 shadow-[0_5px_20px_rgba(0,0,0,0.04)]">
 
         {/* Thumbnail upload */}
         <div className="mb-5">
-          <label className="mb-2 block text-sm font-semibold text-stone-700">Sampul Mata Pelajaran</label>
+          <label className="mb-2 block text-sm font-semibold text-stone-700">Sampul Materi</label>
           <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
           {thumbnail ? (
             <div className="relative h-[180px] overflow-hidden rounded-[20px]">
@@ -114,7 +114,7 @@ export default function CreateCoursePage() {
 
         {/* Course Name */}
         <div className="mb-4">
-          <label className="mb-2 block text-sm font-semibold text-stone-700">Nama Mata Pelajaran</label>
+          <label className="mb-2 block text-sm font-semibold text-stone-700">Nama Materi</label>
           <input
             className="h-[54px] w-full rounded-[16px] border-2 border-[#edf1f5] px-4 text-sm outline-none focus:border-[#2563eb]"
             placeholder="e.g. UTBK Matematika - Aljabar"
@@ -141,7 +141,7 @@ export default function CreateCoursePage() {
           <label className="mb-2 block text-sm font-semibold text-stone-700">Deskripsi Singkat</label>
           <textarea
             className="h-[120px] w-full resize-none rounded-[16px] border-2 border-[#edf1f5] p-4 text-sm outline-none focus:border-[#2563eb]"
-            placeholder="Jelaskan tentang mata pelajaran ini..."
+            placeholder="Jelaskan tentang materi ini..."
             value={form.description}
             onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
           />
@@ -172,7 +172,7 @@ export default function CreateCoursePage() {
           <div className="flex gap-2 text-stone-400">
             <Info size={16} className="mt-0.5 shrink-0" />
             <p className="text-[13px] leading-relaxed">
-              Setelah mata pelajaran dibuat, Anda dapat menambahkan Materi, Kuis, dan Pengaturan Sertifikat.
+              Setelah materi dibuat, Anda dapat menambahkan Bab Pelajaran, Kuis, dan Pengaturan Sertifikat.
             </p>
           </div>
         </div>
@@ -184,7 +184,7 @@ export default function CreateCoursePage() {
           disabled={loading}
           className="h-[58px] w-full rounded-[18px] bg-[#2563eb] text-[15px] font-bold text-white disabled:opacity-60"
         >
-          {loading ? "Membuat..." : "Buat Mata Pelajaran"}
+          {loading ? "Membuat..." : "Buat Materi"}
         </button>
       </div>
     </div>
