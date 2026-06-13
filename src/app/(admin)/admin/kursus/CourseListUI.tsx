@@ -36,8 +36,8 @@ export default function CourseListUI({ courses }: { courses: Course[] }) {
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-[30px] font-extrabold text-stone-900">Materi</h1>
-          <p className="mt-1 text-sm text-stone-400">Kelola materi dan kategori belajar.</p>
+          <h1 className="text-[30px] font-extrabold text-stone-900">Mata Pelajaran</h1>
+          <p className="mt-1 text-sm text-stone-400">Kelola mata pelajaran dan kategori belajar.</p>
         </div>
         <div className="flex gap-2">
           <Link href="/admin/kursus/kategori">

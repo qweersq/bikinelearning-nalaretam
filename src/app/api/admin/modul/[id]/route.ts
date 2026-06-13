@@ -10,7 +10,14 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   }
 
   const { id } = await params;
-  const modul = await prisma.module.findUnique({ where: { id } });
+  const modul = await prisma.module.findUnique({
+    where: { id },
+    include: {
+      widgets: {
+        orderBy: { order: "asc" }
+      }
+    }
+  });
   if (!modul) return NextResponse.json({ message: "Modul tidak ditemukan." }, { status: 404 });
   return NextResponse.json(modul);
 }
@@ -26,8 +33,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const body = await req.json();
   const { title, slug, description, youtubeId, duration, order, courseId, isFree, isPublished } = body;
 
-  if (!title || !slug || !youtubeId || !courseId) {
-    return NextResponse.json({ message: "Field wajib: judul, slug, YouTube ID, course." }, { status: 400 });
+  if (!title || !slug || !courseId) {
+    return NextResponse.json({ message: "Field wajib: judul, slug, course." }, { status: 400 });
   }
 
   const conflict = await prisma.module.findFirst({ where: { slug, NOT: { id } } });
@@ -37,7 +44,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   const modul = await prisma.module.update({
     where: { id },
-    data: { title, slug, description: description || null, youtubeId, duration, order, courseId, isFree, isPublished },
+    data: { title, slug, description: description || null, youtubeId: youtubeId || null, duration, order, courseId, isFree, isPublished },
   });
 
   return NextResponse.json(modul);

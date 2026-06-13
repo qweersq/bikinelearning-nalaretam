@@ -7,7 +7,7 @@ import { LayoutDashboard, BookOpen, Users, CalendarDays, GraduationCap } from "l
 
 const navItems = [
   { href: "/admin",           label: "Dashboard",  icon: LayoutDashboard },
-  { href: "/admin/kursus",    label: "Materi",     icon: BookOpen },
+  { href: "/admin/kursus",    label: "Mapel",     icon: BookOpen },
   { href: "/admin/grup",      label: "Grup",       icon: Users },
   { href: "/admin/jadwal",    label: "Jadwal",     icon: CalendarDays },
   { href: "/admin/member",    label: "Siswa",      icon: GraduationCap },
@@ -28,7 +28,8 @@ export default function AdminBottomNav() {
     };
   }, []);
 
-  if (hidden) return null;
+  const shouldHide = hidden || pathname.includes("/tambah") || pathname.includes("/edit");
+  if (shouldHide) return null;
 
   return (
     <div className="fixed bottom-5 left-1/2 z-50 -translate-x-1/2">

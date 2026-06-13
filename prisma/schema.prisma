@@ -105,7 +105,7 @@ model Module {
   title       String
   slug        String   @unique
   description String?
-  youtubeId   String
+  youtubeId   String?
   duration    Int      @default(0)
   order       Int      @default(0)
   isFree      Boolean  @default(false)
@@ -116,6 +116,7 @@ model Module {
 
   course   Course     @relation(fields: [courseId], references: [id])
   progress Progress[]
+  widgets  ModuleWidget[]
 
   @@map("modules")
 }
@@ -386,4 +387,22 @@ model Group {
   schedules   ClassSchedule[]
 
   @@map("groups")
+}
+
+model ModuleWidget {
+  id        String   @id @default(cuid())
+  moduleId  String
+  type      String   // e.g. "HTML_JS", "IFRAME", "GEOGEBRA", etc.
+  title     String?
+  htmlCode  String?  @db.Text
+  jsCode    String?  @db.Text
+  cssCode   String?  @db.Text
+  iframeUrl String?
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  module    Module   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  @@map("module_widgets")
 }

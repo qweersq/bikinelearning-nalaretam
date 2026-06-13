@@ -54,7 +54,7 @@ export default function TambahModulPage() {
     });
     const data = await res.json();
     if (res.ok) {
-      router.push("/admin/modul");
+      router.push(`/admin/modul/${data.id}/edit`);
     } else {
       setMsg({ type: "error", text: data.message ?? "Gagal menyimpan modul." });
     }
