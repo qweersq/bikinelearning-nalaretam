@@ -29,7 +29,7 @@ export default async function CourseQuizPage({ params }: { params: Promise<{ id:
           </div>
         </Link>
         <div>
-          <h1 className="text-[22px] font-extrabold text-stone-900">Quiz</h1>
+          <h1 className="text-[22px] font-extrabold text-stone-900">Kelola Soal & Kuis</h1>
           <p className="text-xs text-stone-400 truncate max-w-[260px]">{course?.title}</p>
         </div>
       </div>
@@ -56,7 +56,7 @@ export default async function CourseQuizPage({ params }: { params: Promise<{ id:
               <span className={`rounded-full px-3 py-1 text-[11px] font-bold ${quiz.isPublished ? "bg-white/20" : "bg-black/20"}`}>
                 {quiz.isPublished ? "Published" : "Draft"}
               </span>
-              <Link href={`/admin/kursus/${courseId}/quiz/${quiz.id}`}>
+              <Link href={`/admin/kursus/${courseId}/quiz/${quiz.id}?from=/admin/kursus/${courseId}/quiz`}>
                 <button className="rounded-full bg-white/20 px-3 py-1 text-[11px] font-bold">Edit</button>
               </Link>
             </div>
@@ -95,7 +95,7 @@ export default async function CourseQuizPage({ params }: { params: Promise<{ id:
           <div className="mb-4 rounded-[24px] bg-white p-5 shadow-[0_5px_20px_rgba(0,0,0,0.04)]">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="font-bold text-stone-900">Questions ({quiz.questions.length})</h3>
-              <Link href={`/admin/kursus/${courseId}/quiz/${quiz.id}`}>
+              <Link href={`/admin/kursus/${courseId}/quiz/${quiz.id}?from=/admin/kursus/${courseId}/quiz`}>
                 <button className="flex h-8 w-8 items-center justify-center rounded-full bg-[#2563eb]">
                   <Plus size={16} className="text-white" />
                 </button>
@@ -123,9 +123,9 @@ export default async function CourseQuizPage({ params }: { params: Promise<{ id:
             )}
           </div>
 
-          <Link href={`/admin/kursus/${courseId}/quiz/${quiz.id}`}>
+          <Link href={`/admin/kursus/${courseId}/quiz/${quiz.id}?from=/admin/kursus/${courseId}/quiz`}>
             <button className="h-[52px] w-full rounded-[16px] bg-[#2563eb] text-sm font-bold text-white">
-              Kelola Quiz & Pertanyaan
+              Kelola Kuis & Pertanyaan Soal
             </button>
           </Link>
         </>

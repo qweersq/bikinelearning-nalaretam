@@ -36,9 +36,14 @@ export default function AdminBottomNav() {
     <div className="fixed bottom-5 left-1/2 z-50 -translate-x-1/2">
       <nav className="flex items-center gap-1 rounded-[24px] bg-white px-4 py-3 shadow-[0_10px_30px_rgba(0,0,0,0.10)]">
         {navItems.map((item) => {
+          const isQuizPath = pathname.includes("/quiz");
           const active =
             item.href === "/admin"
               ? pathname === "/admin"
+              : item.href === "/admin/quiz"
+              ? isQuizPath
+              : item.href === "/admin/kursus"
+              ? pathname.startsWith("/admin/kursus") && !isQuizPath
               : pathname.startsWith(item.href);
           const Icon = item.icon;
           return (

@@ -109,7 +109,7 @@ export default async function AdminQuizMainPage() {
                         <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${quiz.isPublished ? "bg-emerald-50 text-emerald-700" : "bg-[#fff4e8] text-orange-600"}`}>
                           {quiz.isPublished ? "PUBLISHED" : "DRAFT"}
                         </span>
-                        <Link href={`/admin/kursus/${course.id}/quiz/${quiz.id}`}>
+                        <Link href={`/admin/kursus/${course.id}/quiz/${quiz.id}?from=/admin/quiz`}>
                           <button className="h-[32px] px-3.5 rounded-[8px] bg-[#2563eb] border-0 text-[11px] font-bold text-white cursor-pointer hover:bg-[#1d4ed8]">
                             Kelola Soal
                           </button>
@@ -138,7 +138,7 @@ export default async function AdminQuizMainPage() {
                         <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${quiz.isPublished ? "bg-emerald-50 text-emerald-700" : "bg-[#fff4e8] text-orange-600"}`}>
                           {quiz.isPublished ? "PUBLISHED" : "DRAFT"}
                         </span>
-                        <Link href={`/admin/kursus/${course.id}/quiz/${quiz.id}`}>
+                        <Link href={`/admin/kursus/${course.id}/quiz/${quiz.id}?from=/admin/quiz`}>
                           <button className="h-[32px] px-3.5 rounded-[8px] bg-[#2563eb] border-0 text-[11px] font-bold text-white cursor-pointer hover:bg-[#1d4ed8]">
                             Kelola Soal
                           </button>

@@ -315,7 +315,7 @@ export default function AdminModuleListClient({
                             Preview
                           </button>
                         </Link>
-                        <Link href={`/admin/kursus/${courseId}/quiz/${quiz.id}`}>
+                        <Link href={`/admin/kursus/${courseId}/quiz/${quiz.id}?from=/admin/kursus/${courseId}/modul`}>
                           <button className="h-[32px] px-3.5 rounded-[8px] bg-indigo-600 border-0 text-[11px] font-bold text-white cursor-pointer hover:bg-indigo-750 hover:bg-indigo-700">
                             Edit
                           </button>
@@ -392,7 +392,7 @@ export default function AdminModuleListClient({
                           Preview
                         </button>
                       </Link>
-                      <Link href={`/admin/kursus/${courseId}/quiz/${quiz.id}`}>
+                      <Link href={`/admin/kursus/${courseId}/quiz/${quiz.id}?from=/admin/kursus/${courseId}/modul`}>
                         <button className="h-[32px] px-3.5 rounded-[8px] bg-[#2563eb] border-0 text-[11px] font-bold text-white cursor-pointer hover:bg-[#1d4ed8]">
                           Edit
                         </button>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Plus, Trash2, CheckCircle, XCircle, ChevronDown, ChevronUp } from "lucide-react";
 
@@ -22,6 +22,9 @@ type Quiz = {
 
 export default function QuizEditClient({ courseId, quiz: initialQuiz }: { courseId: string; quiz: Quiz }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const fromPath = searchParams.get("from") || `/admin/kursus/${courseId}/modul`;
+
   const [quiz, setQuiz] = useState(initialQuiz);
   const [editForm, setEditForm] = useState({
     title: initialQuiz.title,
@@ -31,6 +34,7 @@ export default function QuizEditClient({ courseId, quiz: initialQuiz }: { course
     isPublished: initialQuiz.isPublished,
   });
   const [savingInfo, setSavingInfo] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
   const [showAddQ, setShowAddQ] = useState(false);
   const [newQ, setNewQ] = useState<{ question: string; type: "MULTIPLE_CHOICE" | "ESSAY"; options: Option[]; expectedAnswer: string }>({
     question: "", type: "MULTIPLE_CHOICE", expectedAnswer: "",
@@ -42,19 +46,29 @@ export default function QuizEditClient({ courseId, quiz: initialQuiz }: { course
 
   async function saveQuizInfo() {
     setSavingInfo(true);
-    await fetch(`/api/admin/quiz/${quiz.id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        title: editForm.title,
-        description: editForm.description || undefined,
-        passingScore: editForm.passingScore,
-        timeLimit: editForm.timeLimit ? Number(editForm.timeLimit) : undefined,
-        isPublished: editForm.isPublished,
-      }),
-    });
-    setSavingInfo(false);
-    router.refresh();
+    setSaveSuccess(false);
+    try {
+      const res = await fetch(`/api/admin/quiz/${quiz.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: editForm.title,
+          description: editForm.description || undefined,
+          passingScore: editForm.passingScore,
+          timeLimit: editForm.timeLimit ? Number(editForm.timeLimit) : undefined,
+          isPublished: editForm.isPublished,
+        }),
+      });
+      if (res.ok) {
+        setSaveSuccess(true);
+        setTimeout(() => setSaveSuccess(false), 3000);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setSavingInfo(false);
+      router.refresh();
+    }
   }
 
   async function addQuestion() {
@@ -105,20 +119,20 @@ export default function QuizEditClient({ courseId, quiz: initialQuiz }: { course
     <div>
       {/* Header */}
       <div className="mb-5 flex items-center gap-3">
-        <Link href={`/admin/kursus/${courseId}/quiz`}>
+        <Link href={fromPath}>
           <div className="flex h-[42px] w-[42px] items-center justify-center rounded-[14px] bg-white shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
             <ArrowLeft size={18} className="text-stone-600" />
           </div>
         </Link>
-        <h1 className="text-[22px] font-extrabold text-stone-900">Edit Quiz</h1>
+        <h1 className="text-[22px] font-extrabold text-stone-900">Kelola Soal & Kuis</h1>
       </div>
 
       {/* Quiz Info Edit */}
       <div className="mb-4 rounded-[24px] bg-white p-5 shadow-[0_5px_20px_rgba(0,0,0,0.04)]">
-        <h3 className="mb-4 font-bold text-stone-900">Informasi Quiz</h3>
+        <h3 className="mb-4 font-bold text-stone-900">Informasi Kuis / Soal</h3>
         <div className="space-y-3">
           <div>
-            <label className="mb-1.5 block text-xs font-semibold text-stone-500">Judul Quiz</label>
+            <label className="mb-1.5 block text-xs font-semibold text-stone-500">Judul Kuis / Soal</label>
             <input
               value={editForm.title} onChange={(e) => setEditForm((f) => ({ ...f, title: e.target.value }))}
               className="w-full rounded-[12px] border border-[#f1f3f5] bg-[#f8fafc] px-4 py-3 text-sm outline-none focus:border-[#2563eb]"
@@ -160,6 +174,11 @@ export default function QuizEditClient({ courseId, quiz: initialQuiz }: { course
             className="h-[44px] w-full rounded-[12px] bg-[#2563eb] text-sm font-bold text-white disabled:opacity-60">
             {savingInfo ? "Menyimpan..." : "Simpan Perubahan"}
           </button>
+          {saveSuccess && (
+            <div className="mt-2.5 rounded-[12px] bg-emerald-50 border border-emerald-100 p-2.5 text-center text-xs font-bold text-emerald-700">
+              Perubahan berhasil disimpan!
+            </div>
+          )}
         </div>
       </div>
 
