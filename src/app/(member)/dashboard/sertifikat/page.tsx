@@ -14,8 +14,12 @@ export default async function SertifikatPage() {
     prisma.course.findMany({
       where: { status: "PUBLISHED" },
       include: {
-        modules: { where: { isPublished: true }, select: { id: true } },
-        quiz: { select: { id: true, isPublished: true, passingScore: true } },
+        chapters: {
+          include: {
+            modules: { where: { isPublished: true }, select: { id: true } }
+          }
+        },
+        quizzes: { where: { chapterId: null, moduleId: null }, select: { id: true, isPublished: true, passingScore: true } },
         certificates: { where: { userId: session.id }, select: { id: true, certificateNumber: true, issuedAt: true } },
       },
       orderBy: { order: "asc" },
@@ -23,7 +27,7 @@ export default async function SertifikatPage() {
     prisma.certificateTemplate.findFirst({ orderBy: { createdAt: "asc" } }),
   ]);
 
-  const allModuleIds = courses.flatMap((c) => c.modules.map((m) => m.id));
+  const allModuleIds = courses.flatMap((c) => c.chapters.flatMap((ch) => ch.modules.map((m) => m.id)));
   const progresses = await prisma.progress.findMany({
     where: { userId: session.id, completed: true, moduleId: { in: allModuleIds } },
     select: { moduleId: true },
@@ -70,14 +74,15 @@ export default async function SertifikatPage() {
       {/* Per-course certificate cards */}
       <div className="space-y-4">
         {courses.map((course) => {
-          const courseModuleIds = course.modules.map((m) => m.id);
+          const courseModuleIds = course.chapters.flatMap((ch) => ch.modules.map((m) => m.id));
           const completedCount = courseModuleIds.filter((id) => completedIds.has(id)).length;
           const totalModules = courseModuleIds.length;
           const modulesPercent = totalModules > 0 ? Math.round((completedCount / totalModules) * 100) : 0;
           const allModulesDone = totalModules > 0 && completedCount >= totalModules;
 
-          const hasQuiz = !!course.quiz?.isPublished;
-          const quizAttempt = course.quiz ? bestAttempts.get(course.quiz.id) : null;
+          const finalQuiz = course.quizzes[0] ?? null;
+          const hasQuiz = !!finalQuiz?.isPublished;
+          const quizAttempt = finalQuiz ? bestAttempts.get(finalQuiz.id) : null;
           const quizPassed = quizAttempt?.passed ?? false;
 
           const cert = course.certificates[0] ?? null;
@@ -107,7 +112,7 @@ export default async function SertifikatPage() {
                   <ChecklistItem
                     done={quizPassed}
                     label={`Quiz lulus${quizAttempt ? ` (${quizAttempt.score}%)` : ""}`}
-                    sub={!quizPassed ? `Passing score: ${course.quiz!.passingScore}%` : undefined}
+                    sub={!quizPassed ? `Passing score: ${finalQuiz!.passingScore}%` : undefined}
                   />
                 )}
               </div>

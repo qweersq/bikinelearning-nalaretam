@@ -9,13 +9,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ cou
   try { session = await requireSession(); } catch { return NextResponse.json({ message: "Unauthorized" }, { status: 401 }); }
 
   const { courseSlug } = await params;
-  const { answers } = await req.json();
+  const { quizId, answers } = await req.json();
 
   const course = await prisma.course.findUnique({ where: { slug: courseSlug }, select: { id: true } });
   if (!course) return NextResponse.json({ message: "Course tidak ditemukan." }, { status: 404 });
 
-  const quiz = await prisma.quiz.findUnique({
-    where: { courseId: course.id },
+  const quiz = await prisma.quiz.findFirst({
+    where: quizId ? { id: quizId } : { courseId: course.id, chapterId: null, moduleId: null },
     include: { questions: { include: { options: true } } },
   });
   if (!quiz) return NextResponse.json({ message: "Quiz tidak ditemukan." }, { status: 404 });
@@ -77,7 +77,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ cou
   // Auto-generate certificate if passed and all modules completed
   if (passed) {
     const publishedModules = await prisma.module.findMany({
-      where: { courseId: course.id, isPublished: true },
+      where: { chapter: { courseId: course.id }, isPublished: true },
       select: { id: true },
     });
     const completedModules = await prisma.progress.findMany({

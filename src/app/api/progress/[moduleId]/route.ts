@@ -15,12 +15,35 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ modul
     });
 
     // Check if all modules in the course are now completed
-    const module = await prisma.module.findUnique({ where: { id: moduleId }, select: { courseId: true, course: { select: { title: true } } } });
-    if (module) {
-      const publishedModules = await prisma.module.findMany({ where: { courseId: module.courseId, isPublished: true }, select: { id: true } });
-      const completed = await prisma.progress.findMany({ where: { userId: session.id, completed: true, moduleId: { in: publishedModules.map((m) => m.id) } } });
+    const module = await prisma.module.findUnique({
+      where: { id: moduleId },
+      select: {
+        chapter: {
+          select: {
+            courseId: true,
+            course: { select: { title: true } }
+          }
+        }
+      }
+    });
+    if (module && module.chapter) {
+      const { courseId, course } = module.chapter;
+      const publishedModules = await prisma.module.findMany({
+        where: {
+          chapter: { courseId },
+          isPublished: true
+        },
+        select: { id: true }
+      });
+      const completed = await prisma.progress.findMany({
+        where: {
+          userId: session.id,
+          completed: true,
+          moduleId: { in: publishedModules.map((m) => m.id) }
+        }
+      });
       if (publishedModules.length > 0 && completed.length >= publishedModules.length) {
-        await createNotif(session.id, "completion", "Kursus Selesai! 🎓", `Selamat! Kamu telah menyelesaikan semua modul kursus "${module.course.title}". Jangan lupa kerjakan quiz untuk mendapatkan sertifikat.`);
+        await createNotif(session.id, "completion", "Kursus Selesai! 🎓", `Selamat! Kamu telah menyelesaikan semua modul kursus "${course.title}". Jangan lupa kerjakan quiz untuk mendapatkan sertifikat.`);
       }
     }
 

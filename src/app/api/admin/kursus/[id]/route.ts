@@ -12,7 +12,12 @@ export async function GET(_req: NextRequest, { params }: Ctx) {
     where: { id },
     include: {
       category: true,
-      modules: { orderBy: { order: "asc" } },
+      chapters: {
+        orderBy: { order: "asc" },
+        include: {
+          modules: { orderBy: { order: "asc" } }
+        }
+      },
       transactions: { where: { status: "SUCCESS" }, select: { amount: true } },
     },
   });
@@ -44,8 +49,18 @@ export async function DELETE(_req: NextRequest, { params }: Ctx) {
   try { await requireAdmin(); } catch { return NextResponse.json({ message: "Forbidden" }, { status: 403 }); }
 
   const { id } = await params;
-  await prisma.progress.deleteMany({ where: { module: { courseId: id } } });
-  await prisma.module.deleteMany({ where: { courseId: id } });
+  // Delete progresses first matching modules in chapters under the course
+  await prisma.progress.deleteMany({
+    where: {
+      module: {
+        chapter: {
+          courseId: id
+        }
+      }
+    }
+  });
+  // Delete chapters (will cascade delete modules and widgets)
+  await prisma.chapter.deleteMany({ where: { courseId: id } });
   await prisma.course.delete({ where: { id } });
   return NextResponse.json({ message: "Kursus dihapus." });
 }

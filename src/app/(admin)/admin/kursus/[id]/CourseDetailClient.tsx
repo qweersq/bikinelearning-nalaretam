@@ -66,8 +66,7 @@ export default function CourseDetailClient({ course, categories }: { course: Cou
 
   const manageItems = [
     { icon: BookOpen,       label: "Modules",     sub: "Manage lessons & videos",         href: `/admin/kursus/${course.id}/modul` },
-    { icon: ClipboardList,  label: "Quiz",         sub: "Manage questions",                href: `/admin/kursus/${course.id}/quiz` },
-    { icon: Award,          label: "Certificate",  sub: "View issued certificates",        href: `/admin/sertifikat` },
+    // { icon: Award,          label: "Certificate",  sub: "View issued certificates",        href: `/admin/sertifikat` },
     { icon: Users,          label: "Students",     sub: "View enrolled students",          href: `/admin/member?course=${course.id}` },
   ];
 

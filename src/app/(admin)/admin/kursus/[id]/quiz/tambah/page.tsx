@@ -1,13 +1,14 @@
 "use client";
 
-import { use, useState } from "react";
-import { useRouter } from "next/navigation";
+import { use, useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
-export default function TambahQuizPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id: courseId } = use(params);
+function TambahQuizForm({ courseId }: { courseId: string }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const chapterId = searchParams.get("chapterId") || undefined;
 
   const [form, setForm] = useState({ title: "", description: "", passingScore: 70, timeLimit: "", isPublished: false });
   const [loading, setLoading] = useState(false);
@@ -27,6 +28,7 @@ export default function TambahQuizPage({ params }: { params: Promise<{ id: strin
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           courseId,
+          chapterId,
           title: form.title,
           description: form.description || undefined,
           passingScore: form.passingScore,
@@ -43,28 +45,31 @@ export default function TambahQuizPage({ params }: { params: Promise<{ id: strin
     }
   }
 
+  const backUrl = chapterId ? `/admin/kursus/${courseId}/modul` : `/admin/kursus/${courseId}/quiz`;
+  const headerTitle = chapterId ? "Buat Latihan Soal Bab" : "Buat Quiz";
+
   return (
     <div>
       {/* Header */}
       <div className="mb-5 flex items-center gap-3">
-        <Link href={`/admin/kursus/${courseId}/quiz`}>
+        <Link href={backUrl}>
           <div className="flex h-[42px] w-[42px] items-center justify-center rounded-[14px] bg-white shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
             <ArrowLeft size={18} className="text-stone-600" />
           </div>
         </Link>
-        <h1 className="text-[22px] font-extrabold text-stone-900">Buat Quiz</h1>
+        <h1 className="text-[22px] font-extrabold text-stone-900">{headerTitle}</h1>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Basic Info */}
         <div className="rounded-[24px] bg-white p-5 shadow-[0_5px_20px_rgba(0,0,0,0.04)]">
-          <h3 className="mb-4 font-bold text-stone-900">Informasi Quiz</h3>
+          <h3 className="mb-4 font-bold text-stone-900">Informasi</h3>
           <div className="space-y-3">
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-stone-500">Judul Quiz *</label>
+              <label className="mb-1.5 block text-xs font-semibold text-stone-500">Judul *</label>
               <input
                 value={form.title} onChange={(e) => set("title", e.target.value)} required
-                placeholder="Contoh: Kuis Akhir - Aljabar & Fungsi"
+                placeholder="Contoh: Latihan Soal - Aljabar Dasar"
                 className="w-full rounded-[12px] border border-[#f1f3f5] bg-[#f8fafc] px-4 py-3 text-sm outline-none focus:border-[#2563eb]"
               />
             </div>
@@ -72,7 +77,7 @@ export default function TambahQuizPage({ params }: { params: Promise<{ id: strin
               <label className="mb-1.5 block text-xs font-semibold text-stone-500">Deskripsi</label>
               <textarea
                 value={form.description} onChange={(e) => set("description", e.target.value)} rows={3}
-                placeholder="Deskripsi singkat tentang quiz ini..."
+                placeholder="Deskripsi singkat..."
                 className="w-full resize-none rounded-[12px] border border-[#f1f3f5] bg-[#f8fafc] px-4 py-3 text-sm outline-none focus:border-[#2563eb]"
               />
             </div>
@@ -81,7 +86,7 @@ export default function TambahQuizPage({ params }: { params: Promise<{ id: strin
 
         {/* Quiz Settings */}
         <div className="rounded-[24px] bg-white p-5 shadow-[0_5px_20px_rgba(0,0,0,0.04)]">
-          <h3 className="mb-4 font-bold text-stone-900">Pengaturan Quiz</h3>
+          <h3 className="mb-4 font-bold text-stone-900">Pengaturan</h3>
           <div className="space-y-3">
             <div>
               <label className="mb-1.5 block text-xs font-semibold text-stone-500">Passing Score (%)</label>
@@ -126,9 +131,18 @@ export default function TambahQuizPage({ params }: { params: Promise<{ id: strin
           type="submit" disabled={loading}
           className="h-[56px] w-full rounded-[16px] bg-[#2563eb] text-sm font-bold text-white disabled:opacity-60"
         >
-          {loading ? "Menyimpan..." : "Buat Quiz"}
+          {loading ? "Menyimpan..." : "Buat Latihan Soal"}
         </button>
       </form>
     </div>
+  );
+}
+
+export default function TambahQuizPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id: courseId } = use(params);
+  return (
+    <Suspense fallback={<div className="pt-20 text-center text-sm text-stone-400">Loading page...</div>}>
+      <TambahQuizForm courseId={courseId} />
+    </Suspense>
   );
 }

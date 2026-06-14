@@ -11,10 +11,10 @@ export default async function CourseQuizPage({ params }: { params: Promise<{ id:
 
   const course = await prisma.course.findUnique({
     where: { id: courseId },
-    select: { id: true, title: true, quiz: { include: { questions: { include: { options: { orderBy: { order: "asc" } } }, orderBy: { order: "asc" } }, attempts: { select: { id: true, score: true, passed: true } } } } },
+    select: { id: true, title: true, quizzes: { where: { chapterId: null, moduleId: null }, include: { questions: { include: { options: { orderBy: { order: "asc" } } }, orderBy: { order: "asc" } }, attempts: { select: { id: true, score: true, passed: true } } } } },
   });
 
-  const quiz = course?.quiz ?? null;
+  const quiz = course?.quizzes[0] ?? null;
   const attempts = quiz?.attempts ?? [];
   const passedCount = attempts.filter((a) => a.passed).length;
   const avgScore = attempts.length ? Math.round(attempts.reduce((s, a) => s + (a.score ?? 0), 0) / attempts.length) : 0;

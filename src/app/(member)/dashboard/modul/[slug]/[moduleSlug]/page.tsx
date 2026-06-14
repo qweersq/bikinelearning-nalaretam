@@ -5,6 +5,18 @@ import Link from "next/link";
 import { ArrowLeft, CheckCircle2, BookOpen, Video, Code, Globe } from "lucide-react";
 import MarkCompleteButton from "./MarkCompleteButton";
 
+const YoutubeIcon = ({ size = 16, className = "" }: { size?: number; className?: string }) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    width={size}
+    height={size}
+    className={className}
+  >
+    <path d="M23.498 6.163a3.003 3.003 0 0 0-2.11-2.11C19.517 3.545 12 3.545 12 3.545s-7.517 0-9.388.508a3.003 3.003 0 0 0-2.11 2.11C0 8.033 0 12 0 12s0 3.967.502 5.837a3.003 3.003 0 0 0 2.11 2.11c1.871.508 9.388.508 9.388.508s7.517 0 9.388-.508a3.003 3.003 0 0 0 2.11-2.11C24 15.967 24 12 24 12s0-3.967-.502-5.837zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+  </svg>
+);
+
 export const dynamic = "force-dynamic";
 
 export default async function ModulePlayerPage({
@@ -19,12 +31,18 @@ export default async function ModulePlayerPage({
   const course = await prisma.course.findUnique({
     where: { slug: courseSlug },
     include: {
-      modules: { where: isAdmin ? {} : { isPublished: true }, orderBy: { order: "asc" } },
+      chapters: {
+        orderBy: { order: "asc" },
+        include: {
+          modules: { where: isAdmin ? {} : { isPublished: true }, orderBy: { order: "asc" } },
+        },
+      },
     },
   });
   if (!course) notFound();
 
-  const modul = course.modules.find((m) => m.slug === moduleSlug);
+  const allModules = course.chapters.flatMap((ch) => ch.modules);
+  const modul = allModules.find((m) => m.slug === moduleSlug);
   if (!modul) notFound();
 
   // Load specific module with its widgets
@@ -37,25 +55,25 @@ export default async function ModulePlayerPage({
     },
   });
 
-  const moduleIds = course.modules.map((m) => m.id);
+  const moduleIds = allModules.map((m) => m.id);
   const progresses = await prisma.progress.findMany({
     where: { userId: session.id, completed: true, moduleId: { in: moduleIds } },
     select: { moduleId: true },
   });
 
   const completedSet = new Set(progresses.map((p) => p.moduleId));
-  const currentIdx = course.modules.findIndex((m) => m.id === modul.id);
-  const prevModule = currentIdx > 0 ? course.modules[currentIdx - 1] : null;
-  const nextModule = currentIdx < course.modules.length - 1 ? course.modules[currentIdx + 1] : null;
+  const currentIdx = allModules.findIndex((m) => m.id === modul.id);
+  const prevModule = currentIdx > 0 ? allModules[currentIdx - 1] : null;
+  const nextModule = currentIdx < allModules.length - 1 ? allModules[currentIdx + 1] : null;
   const completedCount = completedSet.size;
-  const percent = course.modules.length > 0 ? Math.round((completedCount / course.modules.length) * 100) : 0;
+  const percent = allModules.length > 0 ? Math.round((completedCount / allModules.length) * 100) : 0;
   const isCompleted = completedSet.has(modul.id);
 
   const widgets = modulWithWidgets?.widgets || [];
 
   return (
     <div className="mx-auto max-w-[720px] px-4 pb-32 pt-4 min-h-screen bg-[#f5f7fb]">
-      
+
       {/* Back Button */}
       <Link href={`/dashboard/modul/${courseSlug}`}>
         <button className="flex h-[42px] w-[42px] items-center justify-center rounded-[14px] bg-white border-0 shadow-[0_4px_12px_rgba(0,0,0,0.06)] cursor-pointer text-stone-600 hover:bg-stone-50 transition-colors mb-5">
@@ -72,7 +90,7 @@ export default async function ModulePlayerPage({
       <h1 className="text-3xl font-extrabold text-stone-900 mb-2 leading-tight">
         Materi {modul.order}: {modul.title}
       </h1>
-      
+
       {modul.description && (
         <p className="text-[#6b7280] text-[15px] leading-relaxed mb-6">
           {modul.description}
@@ -111,6 +129,9 @@ export default async function ModulePlayerPage({
               } else if (widget.type === "HTML_JS") {
                 widgetTitle = widget.title || "Simulasi Interaktif";
                 widgetDesc = "Coba manipulasi parameter dan lihat hasilnya";
+              } else if (widget.type === "TEXT") {
+                widgetTitle = widget.title || "Materi Bacaan";
+                widgetDesc = "Baca dan pelajari konsep teori";
               } else if (widget.type === "IFRAME") {
                 widgetTitle = widget.title || "Media Embed Eksternal";
                 widgetDesc = "Pelajari konsep visual interaktif";
@@ -140,13 +161,13 @@ export default async function ModulePlayerPage({
       ) : (
         <div className="space-y-5">
           {widgets.map((widget, idx) => {
-            let IconComponent = Globe;
+            let IconComponent: any = Globe;
             let iconBgClass = "bg-emerald-50 text-emerald-600";
             let displayTitle = widget.title || "Media Interaktif";
             let displayDesc = "Pelajari konsep visual interaktif di bawah ini:";
 
             if (widget.type === "VIDEO") {
-              IconComponent = Video;
+              IconComponent = YoutubeIcon;
               iconBgClass = "bg-red-50 text-red-600";
               displayTitle = widget.title || `Video Penjelasan`;
               displayDesc = "Simak penjelasan video di bawah ini secara seksama:";
@@ -155,6 +176,11 @@ export default async function ModulePlayerPage({
               iconBgClass = "bg-indigo-50 text-indigo-600";
               displayTitle = widget.title || "Simulasi Interaktif";
               displayDesc = "Ubah parameter simulasi dan amati bagaimana hasilnya berubah secara langsung:";
+            } else if (widget.type === "TEXT") {
+              IconComponent = BookOpen;
+              iconBgClass = "bg-blue-50 text-blue-600";
+              displayTitle = widget.title || "Penjelasan Materi";
+              displayDesc = "Pelajari penjelasan materi tertulis di bawah ini:";
             }
 
             return (
@@ -186,6 +212,11 @@ export default async function ModulePlayerPage({
                     />
                   </div>
                 )}
+                {widget.type === "TEXT" && (
+                  <div className="prose max-w-none text-stone-800 leading-relaxed quill-content">
+                    <div dangerouslySetInnerHTML={{ __html: widget.htmlCode || "" }} />
+                  </div>
+                )}
 
                 {widget.type === "HTML_JS" && (
                   <iframe
@@ -197,6 +228,9 @@ export default async function ModulePlayerPage({
                         <head>
                           <meta charset="utf-8">
                           <meta name="viewport" content="width=device-width, initial-scale=1">
+                          <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+                          <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+                          <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body, {delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]});"></script>
                           <style>
                             body {
                               margin: 0;
@@ -204,6 +238,16 @@ export default async function ModulePlayerPage({
                               font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
                               color: #1c1917;
                               background: #ffffff;
+                            }
+                            .formula {
+                              background: #f8fafc;
+                              border-left: 4px solid #2563eb;
+                              padding: 18px;
+                              border-radius: 12px;
+                              margin: 25px 0;
+                              font-family: 'Times New Roman', Times, serif;
+                              font-size: 22px;
+                              text-align: center;
                             }
                             ${widget.cssCode || ""}
                           </style>
@@ -236,6 +280,82 @@ export default async function ModulePlayerPage({
           })}
         </div>
       )}
+
+      {/* KaTeX Auto-render Assets */}
+      <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css"
+      />
+      <script
+        defer
+        src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"
+      />
+      <script
+        defer
+        src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"
+      />
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `
+            function runKaTeX() {
+              if (window.renderMathInElement) {
+                window.renderMathInElement(document.body, {
+                  delimiters: [
+                    { left: "$$", right: "$$", display: true },
+                    { left: "$", right: "$", display: false }
+                  ]
+                });
+              }
+            }
+            // Trigger on load
+            if (document.readyState === "complete" || document.readyState === "interactive") {
+              setTimeout(runKaTeX, 100);
+            } else {
+              document.addEventListener("DOMContentLoaded", runKaTeX);
+            }
+          `,
+        }}
+      />
+
+      {/* Custom Styles for quill-content and formula blocks */}
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+            .quill-content p {
+              margin-bottom: 1rem;
+            }
+            .quill-content h1, .quill-content h2, .quill-content h3 {
+              font-weight: bold;
+              margin-top: 1.5rem;
+              margin-bottom: 0.5rem;
+              color: #111827;
+            }
+            .quill-content h1 { font-size: 2em; }
+            .quill-content h2 { font-size: 1.5em; }
+            .quill-content h3 { font-size: 1.17em; }
+            .quill-content ul {
+              list-style-type: disc;
+              padding-left: 1.5rem;
+              margin-bottom: 1rem;
+            }
+            .quill-content ol {
+              list-style-type: decimal;
+              padding-left: 1.5rem;
+              margin-bottom: 1rem;
+            }
+            .formula {
+              background: #f8fafc;
+              border-left: 4px solid #2563eb;
+              padding: 18px;
+              border-radius: 12px;
+              margin: 25px 0;
+              font-family: 'Times New Roman', Times, serif;
+              font-size: 22px;
+              text-align: center;
+            }
+          `,
+        }}
+      />
 
       {/* Floating Bottom Navigation buttons (Mark complete & Next) */}
       <MarkCompleteButton

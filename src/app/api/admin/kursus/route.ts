@@ -8,7 +8,11 @@ export async function GET() {
   const courses = await prisma.course.findMany({
     include: {
       category: { select: { name: true } },
-      modules: { select: { id: true } },
+      chapters: {
+        include: {
+          modules: { select: { id: true } }
+        }
+      },
       transactions: { where: { status: "SUCCESS" }, select: { amount: true } },
     },
     orderBy: { order: "asc" },

@@ -31,10 +31,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   const { id } = await params;
   const body = await req.json();
-  const { title, slug, description, youtubeId, duration, order, courseId, isFree, isPublished } = body;
+  const { title, slug, description, youtubeId, duration, order, chapterId, isFree, isPublished } = body;
 
-  if (!title || !slug || !courseId) {
-    return NextResponse.json({ message: "Field wajib: judul, slug, course." }, { status: 400 });
+  if (!title || !slug || !chapterId) {
+    return NextResponse.json({ message: "Field wajib: judul, slug, bab." }, { status: 400 });
   }
 
   const conflict = await prisma.module.findFirst({ where: { slug, NOT: { id } } });
@@ -44,7 +44,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   const modul = await prisma.module.update({
     where: { id },
-    data: { title, slug, description: description || null, youtubeId: youtubeId || null, duration, order, courseId, isFree, isPublished },
+    data: { title, slug, description: description || null, youtubeId: youtubeId || null, duration, order, chapterId, isFree, isPublished },
   });
 
   return NextResponse.json(modul);

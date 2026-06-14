@@ -1,13 +1,17 @@
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
-import QuizClient from "./QuizClient";
+import QuizClient from "../QuizClient";
 
 export const dynamic = "force-dynamic";
 
-export default async function QuizPage({ params }: { params: Promise<{ courseSlug: string }> }) {
+export default async function QuizPage({
+  params,
+}: {
+  params: Promise<{ courseSlug: string; quizId: string }>;
+}) {
   const session = await requireSession();
-  const { courseSlug } = await params;
+  const { courseSlug, quizId } = await params;
 
   const course = await prisma.course.findUnique({
     where: { slug: courseSlug },
@@ -15,8 +19,8 @@ export default async function QuizPage({ params }: { params: Promise<{ courseSlu
   });
   if (!course) notFound();
 
-  const quiz = await prisma.quiz.findFirst({
-    where: { courseId: course.id, chapterId: null, moduleId: null },
+  const quiz = await prisma.quiz.findUnique({
+    where: { id: quizId },
     include: {
       questions: {
         orderBy: { order: "asc" },
@@ -25,7 +29,7 @@ export default async function QuizPage({ params }: { params: Promise<{ courseSlu
     },
   });
 
-  if (!quiz || !quiz.isPublished) notFound();
+  if (!quiz || !quiz.isPublished || quiz.courseId !== course.id) notFound();
 
   const lastAttempt = await prisma.quizAttempt.findFirst({
     where: { userId: session.id, quizId: quiz.id },
@@ -48,7 +52,15 @@ export default async function QuizPage({ params }: { params: Promise<{ courseSlu
           options: q.options,
         })),
       }}
-      lastAttempt={lastAttempt ? { score: lastAttempt.score, passed: lastAttempt.passed, completedAt: lastAttempt.completedAt.toISOString() } : null}
+      lastAttempt={
+        lastAttempt
+          ? {
+              score: lastAttempt.score,
+              passed: lastAttempt.passed,
+              completedAt: lastAttempt.completedAt.toISOString(),
+            }
+          : null
+      }
     />
   );
 }

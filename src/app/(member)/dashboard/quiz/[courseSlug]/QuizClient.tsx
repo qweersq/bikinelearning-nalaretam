@@ -35,7 +35,7 @@ export default function QuizClient({ course, quiz, lastAttempt }: { course: Cour
     const res = await fetch(`/api/quiz/${course.slug}/attempt`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ answers: payload }),
+      body: JSON.stringify({ quizId: quiz.id, answers: payload }),
     });
     const data = await res.json();
     setResult(data);

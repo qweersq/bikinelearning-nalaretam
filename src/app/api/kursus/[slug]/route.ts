@@ -9,7 +9,7 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ slug: 
 
     const modul = await prisma.module.findUnique({
       where: { slug, isPublished: true },
-      include: { course: true },
+      include: { chapter: { include: { course: true } } },
     });
     if (!modul) return NextResponse.json({ message: "Modul tidak ditemukan." }, { status: 404 });
 

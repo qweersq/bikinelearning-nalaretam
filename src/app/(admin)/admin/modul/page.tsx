@@ -10,8 +10,25 @@ export const dynamic = "force-dynamic";
 export default async function AdminModulPage() {
   await requireAdmin();
   const modules = await prisma.module.findMany({
-    include: { course: true },
-    orderBy: [{ course: { order: "asc" } }, { order: "asc" }],
+    include: {
+      chapter: {
+        include: { course: true }
+      }
+    },
+    orderBy: { order: "asc" },
+  });
+
+  // Sort modules by Course order, Chapter order, and Module order
+  modules.sort((a, b) => {
+    const courseOrderA = a.chapter?.course?.order ?? 0;
+    const courseOrderB = b.chapter?.course?.order ?? 0;
+    if (courseOrderA !== courseOrderB) return courseOrderA - courseOrderB;
+
+    const chapterOrderA = a.chapter?.order ?? 0;
+    const chapterOrderB = b.chapter?.order ?? 0;
+    if (chapterOrderA !== chapterOrderB) return chapterOrderA - chapterOrderB;
+
+    return a.order - b.order;
   });
 
   return (
@@ -21,8 +38,8 @@ export default async function AdminModulPage() {
           <h1 className="font-[family-name:var(--font-sora)] text-2xl font-bold text-stone-900">Kelola Modul</h1>
           <p className="mt-1 text-stone-500">{modules.length} modul terdaftar.</p>
         </div>
-        <Link href="/admin/modul/tambah">
-          <Button size="sm">+ Tambah Modul</Button>
+        <Link href="/admin/kursus">
+          <Button size="sm">+ Tambah Modul (Pilih Kelas)</Button>
         </Link>
       </div>
 
@@ -37,13 +54,15 @@ export default async function AdminModulPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-stone-900 text-sm">{m.title}</p>
-                <p className="text-xs text-stone-400 mt-0.5">{m.course.title} · {m.duration} mnt</p>
+                <p className="text-xs text-stone-400 mt-0.5">
+                  {m.chapter?.course?.title || "Tanpa Kelas"} · {m.chapter?.title || "Tanpa Bab"} · {m.duration} mnt
+                </p>
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <Badge variant={m.isPublished ? "green" : "neutral"}>
                   {m.isPublished ? "Aktif" : "Draft"}
                 </Badge>
-                <Link href={`/admin/modul/${m.id}/edit`}>
+                <Link href={`/admin/kursus/${m.chapter?.courseId}/modul/${m.id}/edit`}>
                   <Button variant="secondary" size="sm">Edit</Button>
                 </Link>
               </div>

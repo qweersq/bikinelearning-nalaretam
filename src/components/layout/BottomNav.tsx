@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, BookOpen, CalendarDays, Users } from "lucide-react";
+import { Home, BookOpen, ClipboardList, CalendarDays, Users } from "lucide-react";
 
 const navItems = [
   { href: "/dashboard",              label: "Home",       icon: Home },
   { href: "/dashboard/modul",        label: "Materi",     icon: BookOpen },
+  { href: "/dashboard/quiz",         label: "Soal",       icon: ClipboardList },
   { href: "/dashboard/jadwal",       label: "Jadwal",     icon: CalendarDays },
   { href: "/dashboard/grup",         label: "Grup",       icon: Users },
 ];
@@ -14,7 +15,7 @@ const navItems = [
 export default function BottomNav() {
   const pathname = usePathname();
 
-  if (pathname.startsWith("/dashboard/modul/")) return null;
+  if (pathname.startsWith("/dashboard/modul/") || pathname.startsWith("/dashboard/quiz/")) return null;
 
   return (
     <div className="fixed bottom-5 left-1/2 z-50 -translate-x-1/2">

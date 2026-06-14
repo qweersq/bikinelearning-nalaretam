@@ -12,7 +12,11 @@ export default async function CoursesListPage() {
       where: { status: "PUBLISHED" },
       include: {
         category: true,
-        modules: { where: { isPublished: true }, select: { id: true, duration: true } },
+        chapters: {
+          include: {
+            modules: { where: { isPublished: true }, select: { id: true, duration: true } },
+          },
+        },
       },
       orderBy: { order: "asc" },
     }),
@@ -22,12 +26,21 @@ export default async function CoursesListPage() {
 
   const completedIds = new Set(progresses.map((p) => p.moduleId));
 
-  const coursesWithStats = courses.map((c) => ({
-    ...c,
-    moduleCount: c.modules.length,
-    totalDuration: c.modules.reduce((sum, m) => sum + m.duration, 0),
-    completedCount: c.modules.filter((m) => completedIds.has(m.id)).length,
-  }));
+  const coursesWithStats = courses.map((c) => {
+    const allModules = c.chapters.flatMap((ch) => ch.modules);
+    return {
+      id: c.id,
+      slug: c.slug,
+      title: c.title,
+      description: c.description,
+      thumbnail: c.thumbnail,
+      categoryId: c.categoryId,
+      category: c.category,
+      moduleCount: allModules.length,
+      totalDuration: allModules.reduce((sum, m) => sum + m.duration, 0),
+      completedCount: allModules.filter((m) => completedIds.has(m.id)).length,
+    };
+  });
 
   return <CoursesUI courses={coursesWithStats} categories={categories} />;
 }

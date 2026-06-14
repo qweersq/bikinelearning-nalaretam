@@ -13,9 +13,13 @@ export default async function AdminCourseDetailPage({ params }: { params: Promis
     prisma.course.findUnique({
       where: { id },
       include: {
-        modules: { select: { id: true } },
+        chapters: {
+          include: {
+            modules: { select: { id: true } }
+          }
+        },
         transactions: { where: { status: "SUCCESS" }, select: { amount: true, userId: true } },
-        quiz: { select: { id: true } },
+        quizzes: { where: { chapterId: null, moduleId: null }, select: { id: true } },
       },
     }),
     prisma.category.findMany({ orderBy: { order: "asc" }, select: { id: true, name: true } }),
@@ -25,6 +29,7 @@ export default async function AdminCourseDetailPage({ params }: { params: Promis
 
   const studentCount = new Set(course.transactions.map((t) => t.userId)).size;
   const revenue = course.transactions.reduce((sum, t) => sum + t.amount, 0);
+  const totalModules = course.chapters.reduce((sum, ch) => sum + ch.modules.length, 0);
 
   return (
     <CourseDetailClient
@@ -36,10 +41,10 @@ export default async function AdminCourseDetailPage({ params }: { params: Promis
         status: course.status,
         categoryId: course.categoryId,
         thumbnail: course.thumbnail ?? "",
-        moduleCount: course.modules.length,
+        moduleCount: totalModules,
         studentCount,
         revenue,
-        hasQuiz: !!course.quiz,
+        hasQuiz: course.quizzes.length > 0,
       }}
       categories={categories}
     />

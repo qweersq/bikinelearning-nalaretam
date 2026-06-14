@@ -10,8 +10,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ courseS
   const course = await prisma.course.findUnique({ where: { slug: courseSlug }, select: { id: true, title: true } });
   if (!course) return NextResponse.json({ message: "Course tidak ditemukan." }, { status: 404 });
 
-  const quiz = await prisma.quiz.findUnique({
-    where: { courseId: course.id },
+  const quiz = await prisma.quiz.findFirst({
+    where: { courseId: course.id, chapterId: null, moduleId: null },
     include: {
       questions: {
         where: {},

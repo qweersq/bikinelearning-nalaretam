@@ -14,14 +14,34 @@ export default async function AdminStudentDetailPage({ params }: { params: Promi
     prisma.user.findUnique({
       where: { id, role: "USER" },
       include: {
-        progress: { where: { completed: true }, include: { module: { include: { course: true } } } },
+        progress: {
+          where: { completed: true },
+          include: {
+            module: {
+              include: {
+                chapter: {
+                  include: { course: true }
+                }
+              }
+            }
+          }
+        },
         certificates: { include: { course: { select: { title: true } } } },
         transactions: { where: { status: "SUCCESS" }, include: { course: { select: { title: true } } } },
       },
     }),
     prisma.course.findMany({
       where: { status: "PUBLISHED" },
-      select: { id: true, title: true, slug: true, modules: { where: { isPublished: true }, select: { id: true } } },
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        chapters: {
+          select: {
+            modules: { where: { isPublished: true }, select: { id: true } }
+          }
+        }
+      },
     }),
     prisma.module.count({ where: { isPublished: true } }),
   ]);
@@ -31,12 +51,22 @@ export default async function AdminStudentDetailPage({ params }: { params: Promi
   const initials = user.name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
   const progress = totalModules > 0 ? Math.round((user.progress.length / totalModules) * 100) : 0;
 
-  const modulesPerCourse = new Map(allCourses.map((c) => [c.id, c.modules.length]));
+  const modulesPerCourse = new Map(
+    allCourses.map((c) => {
+      const count = c.chapters.flatMap((ch) => ch.modules).length;
+      return [c.id, count];
+    })
+  );
 
   const courseMap = new Map<string, { title: string; slug: string; completedCount: number; totalCount: number }>();
   for (const p of user.progress) {
-    const course = p.module.course;
-    const existing = courseMap.get(course.id) ?? { title: course.title, slug: course.slug, completedCount: 0, totalCount: modulesPerCourse.get(course.id) ?? 0 };
+    const course = p.module.chapter.course;
+    const existing = courseMap.get(course.id) ?? {
+      title: course.title,
+      slug: course.slug,
+      completedCount: 0,
+      totalCount: modulesPerCourse.get(course.id) ?? 0
+    };
     courseMap.set(course.id, { ...existing, completedCount: existing.completedCount + 1 });
   }
 

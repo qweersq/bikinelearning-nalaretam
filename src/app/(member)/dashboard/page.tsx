@@ -29,8 +29,18 @@ export default async function DashboardPage() {
     }),
     prisma.module.findMany({
       where: { isPublished: true },
-      include: { course: { include: { category: true } } },
-      orderBy: [{ course: { order: "asc" } }, { order: "asc" }],
+      include: {
+        chapter: {
+          include: {
+            course: { include: { category: true } }
+          }
+        }
+      },
+      orderBy: [
+        { chapter: { course: { order: "asc" } } },
+        { chapter: { order: "asc" } },
+        { order: "asc" }
+      ],
     }),
     prisma.progress.findMany({ where: { userId: session.id, completed: true } }),
     prisma.notification.count({ where: { userId: session.id, isRead: false } }),
@@ -39,7 +49,11 @@ export default async function DashboardPage() {
   const completedIds = new Set(progresses.map((p) => p.moduleId));
   const percent = modules.length > 0 ? Math.round((completedIds.size / modules.length) * 100) : 0;
   const nextModule = modules.find((m) => !completedIds.has(m.id));
-  const courses = Array.from(new Map(modules.map((m) => [m.courseId, m.course])).values());
+  const courses = Array.from(
+    new Map(
+      modules.map((m) => [m.chapter.courseId, m.chapter.course])
+    ).values()
+  );
   const firstName = user?.name?.split(" ")[0] ?? "Kamu";
 
   return (
@@ -96,12 +110,12 @@ export default async function DashboardPage() {
             <h3 className="text-lg font-bold text-stone-900">Lanjutkan Belajar</h3>
             <Link href="/dashboard/modul" className="text-sm font-semibold text-[#2563eb]">Lihat Semua</Link>
           </div>
-          <Link href={`/dashboard/modul/${nextModule.course.slug}/${nextModule.slug}`}>
+          <Link href={`/dashboard/modul/${nextModule.chapter.course.slug}/${nextModule.slug}`}>
             <div className="flex items-center justify-between rounded-[24px] bg-white p-[18px] shadow-[0_5px_20px_rgba(0,0,0,0.05)] transition-shadow hover:shadow-[0_8px_25px_rgba(0,0,0,0.08)]">
               <div className="min-w-0 flex-1">
                 <p className="text-xs text-stone-400">Materi {nextModule.order}</p>
                 <h4 className="mt-1 truncate text-base font-bold text-stone-900">{nextModule.title}</h4>
-                <p className="mt-0.5 text-xs text-stone-400">{nextModule.course.title} · {nextModule.duration} mnt</p>
+                <p className="mt-0.5 text-xs text-stone-400">{nextModule.chapter.course.title} · {nextModule.duration} mnt</p>
               </div>
               <div className="ml-4 flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#2563eb] text-white">
                 <Play size={20} fill="white" />
@@ -157,7 +171,7 @@ export default async function DashboardPage() {
           <h3 className="mb-3 text-lg font-bold text-stone-900">Jalur Belajar</h3>
           <div className="grid grid-cols-2 gap-3">
             {courses.map((course) => {
-              const courseModules = modules.filter((m) => m.courseId === course.id);
+              const courseModules = modules.filter((m) => m.chapter.courseId === course.id);
               const courseDone = courseModules.filter((m) => completedIds.has(m.id)).length;
               const Icon = courseIconMap[course.slug] ?? TrendingUp;
               return (

@@ -10,10 +10,10 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { title, slug, description, youtubeId, duration, order, courseId, isFree, isPublished } = body;
+  const { title, slug, description, youtubeId, duration, order, chapterId, isFree, isPublished } = body;
 
-  if (!title || !slug || !courseId) {
-    return NextResponse.json({ message: "Field wajib: judul, slug, course." }, { status: 400 });
+  if (!title || !slug || !chapterId) {
+    return NextResponse.json({ message: "Field wajib: judul, slug, bab." }, { status: 400 });
   }
 
   const existing = await prisma.module.findUnique({ where: { slug } });
@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
   }
 
   const modul = await prisma.module.create({
-    data: { title, slug, description: description || null, youtubeId: youtubeId || null, duration, order, courseId, isFree, isPublished },
+    data: { title, slug, description: description || null, youtubeId: youtubeId || null, duration, order, chapterId, isFree, isPublished },
   });
 
   return NextResponse.json(modul, { status: 201 });
